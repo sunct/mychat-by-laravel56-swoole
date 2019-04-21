@@ -13,6 +13,10 @@
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link href="{{ asset('css/mystyle.css') }}" rel="stylesheet">
+    <link href="{{ asset('dist/sweetalert.css')}}" rel="stylesheet">
+    <script src="{{ asset('js/jquery-2.1.1.min.js') }}"></script>
+    <script src="{{ asset('dist/sweetalert.min.js') }}"></script>
+
 </head>
 <body>
     <div id="app">
@@ -44,15 +48,17 @@
                                 </a>
 
                                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    <a class="dropdown-item" href="{{ route('home') }}">个人中心</a>
                                     <a class="dropdown-item" href="{{ route('logout') }}"
                                        onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
-                                        Logout
+                                        登出
                                     </a>
 
                                     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                         @csrf
                                     </form>
+                                    @include('sweet::alert')
                                 </div>
                             </li>
                         @endguest

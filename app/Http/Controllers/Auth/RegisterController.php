@@ -3,10 +3,18 @@
 namespace App\Http\Controllers\Auth;
 
 use App\User;
+use Mockery as m;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
+
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Auth;
+
+use Jrean\UserVerification\Traits\VerifiesUsers;
+use Jrean\UserVerification\Facades\UserVerification;
 
 class RegisterController extends Controller
 {
@@ -22,6 +30,7 @@ class RegisterController extends Controller
     */
 
     use RegistersUsers;
+    use VerifiesUsers;
 
     /**
      * Where to redirect users after registration.
@@ -37,8 +46,16 @@ class RegisterController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('guest');
+//        $this->middleware('guest');
+        $this->middleware('guest', ['except' => ['getVerification', 'getVerificationError','emailVerify']]);
     }
+    // 验证失败后的跳转地址
+    public $redirectIfVerificationFails = '/emails/verification-result/failure';
+    // 检测到用户已经验证过后的跳转地址
+    public $redirectIfVerified = '/emails/verification-result/success';
+    // 验证成功后的跳转地址
+    public $redirectAfterVerification = '/emails/verification-result/success';
+
 
     /**
      * Get a validator for an incoming registration request.
@@ -69,4 +86,44 @@ class RegisterController extends Controller
             'password' => Hash::make($data['password']),
         ]);
     }
+
+
+    public function register(Request $request)
+    {
+
+        $this->validator($request->all())->validate();
+
+        $user = $this->create($request->all());
+
+        event(new Registered($user));
+
+        $this->guard()->login($user);
+        // 生成用户的验证 token，并将用户的 verified 设置为 0
+        UserVerification::generate($user);
+
+        // 给用户发邮件
+        UserVerification::send($user, '请验证您的邮箱');
+
+        return redirect($this->redirectPath());
+    }
+
+
+    public function emailVerify(Request $request)
+    {
+        $user = Auth::user();
+        // 给用户发邮件
+        if(!$user->verified){
+            // 生成用户的验证 token，并将用户的 verified 设置为 0
+            UserVerification::generate($user);
+            UserVerification::send($user, '请验证您的邮箱');
+            alert()->success('验证邮箱邮件发送成功！请注意查收！');
+        }else{
+            alert()->success('该邮箱已通过验证，无需再次验证！');
+        }
+        return redirect($this->redirectPath());
+
+    }
+
+
+
 }

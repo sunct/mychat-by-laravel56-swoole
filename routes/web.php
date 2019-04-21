@@ -15,6 +15,19 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::get('/about','IndexController@about');
-Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
+Auth::routes();
+//Route::get('/sendActivationMail','Auth\RegisterController@sendMail');
+//Route::get('/activeAccount','Auth\RegisterController@activeMail');
+
+Route::get('verification/{token}', 'Auth\RegisterController@getVerification');
+
+Route::get('emails/verification-result/success', 'EmailVerificationController@emailsVerificationSuccess')->middleware("auth");
+
+//Route::group(['middleware' => ['isVerified']], function () {
+//    Route::get('verification/{token}', 'Auth\RegisterController@getVerification');
+
+    Route::get('/home', 'HomeController@index')->name('home');
+//});
+
+Route::post('/emailVerify', 'Auth\RegisterController@emailVerify')->name('emailVerify');
